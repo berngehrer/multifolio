@@ -1,0 +1,17 @@
+﻿@page "/chain/create"
+
+@inject HttpClient http
+@inject NavigationManager uriHelper
+
+<h3>Create Chain</h3>
+
+<ChainForm ButtonText="Create Chain" chain="@chain" OnValidSubmit="@CreateChain" />
+
+@code {
+    Chain chain = new Chain();
+    async Task CreateChain()
+    {
+        await http.PostAsJsonAsync("api/chains", chain);
+        uriHelper.NavigateTo("chain");
+    }
+}

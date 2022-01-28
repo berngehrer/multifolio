@@ -1,0 +1,86 @@
+﻿<EditForm Model="@chain" OnValidSubmit="@OnValidSubmit">
+    <DataAnnotationsValidator />
+    <RadzenCard>
+        <div class="form-group ">
+            <div>
+                <label>Wallet:</label>
+                <div>
+                    @*<RadzenDropDown AllowClear="false" TValue="ChainType" @bind-Value=@chain.Type Data=@walletEntries Placeholder="Select..." Class="w-100">
+                        <Template Context="item">
+                            @item.ToString()
+                        </Template>
+                    </RadzenDropDown>*@
+
+                    <InputSelect @bind-Value="chain.Type">
+                        @foreach (var value in Enum.GetValues(typeof(ChainType)))
+                        {
+                            <option>@value</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Name:</label>
+            <div>
+                <RadzenTextBox @bind-Value=@chain.Name Class="w-100" />
+                <ValidationMessage For="@(() => chain.Name)" />
+            </div>
+        </div>
+        <div class="form-group ">
+            <div>
+                <label>Host:</label>
+                <div>
+                    <RadzenTextBox @bind-Value=@chain.Host Class="w-100" />
+                    <ValidationMessage For="@(() => chain.Host)" />
+                </div>
+            </div>
+        </div>
+        <div class="form-group ">
+            <div>
+                <label>Symbol:</label>
+                <div>
+                    <RadzenTextBox @bind-Value=@chain.Symbol MaxLength="8" Class="w-100" />
+                    <ValidationMessage For="@(() => chain.Symbol)" />
+                </div>
+            </div>
+        </div>
+        <div class="form-group ">
+            <div>
+                <label>Icon:</label>
+                <div>
+                    <RadzenTextBox @bind-Value=@chain.Icon Class="w-100" />
+                </div>
+                <a href="http://cryptoicons.co/" target="_blank">Checkout</a>
+            </div>
+        </div>
+        <div class="form-group ">
+            <div>
+                <label>Allow Token:</label>
+                <div>
+                    <RadzenSwitch @bind-Value="@chain.AllowToken" />
+                    @*<InputCheckbox @bind-Value="@chain.AllowToken" />*@
+                </div>
+            </div>
+        </div>
+    </RadzenCard>
+    <br />
+    <RadzenButton ButtonType="ButtonType.Submit" style="width: 120px" Text="@ButtonText" />
+
+    @*<button type="submit" class="btn btn-success">
+            @ButtonText
+        </button>*@
+</EditForm>
+
+@code {
+    //string[] walletEntries;
+
+    [Parameter] public Chain chain { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+    //protected override void OnInitialized()
+    //{
+    //    walletEntries = Enum.GetValues(typeof(ChainType)).OfType<ChainType>().Select(x => x.ToString()).ToArray();
+    //}
+}

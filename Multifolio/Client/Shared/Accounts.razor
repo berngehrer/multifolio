@@ -1,0 +1,247 @@
+﻿@page "/account"
+
+@inject NavigationManager uriHelper;
+@inject HttpClient client
+@inject IJSRuntime js
+
+<p>
+    <h2>&nbsp;Accounts</h2>
+</p>
+
+<div class="form-group">
+    <RadzenButton Click=@(args => CreateAccount()) Text="Create" Icon="add" ButtonStyle="ButtonStyle.Success" />
+    @*<a class="btn btn-success" href="account/create"><i class="oi oi-plus"></i> Create</a>*@
+</div>
+<br>
+
+@if (!loaded)
+{
+    <text>Loading...</text>
+}
+else
+{
+    <RadzenGrid AllowFiltering="false" AllowPaging="false" AllowSorting="true" Data="@accounts" TItem="Account">
+        <Columns>
+            <RadzenGridColumn TItem="Account" Property="Name" Title="Name">
+                <Template Context="data">
+                    <img src="@accountChainMap[data].Icon" style="height:24px" /> &ensp; @data.Name
+                </Template>
+            </RadzenGridColumn>
+            <RadzenGridColumn TItem="Account" Title="Balance" TextAlign="TextAlign.Right">
+                <Template Context="data">
+                    @accountBalanceMap[data].Balance @accountChainMap[data].Symbol
+                </Template>
+            </RadzenGridColumn>
+            <RadzenGridColumn TItem="Account" Title="Wallet">
+                <Template Context="data">
+                    @accountChainMap[data].Name
+                    @*// .Host*@
+                </Template>
+            </RadzenGridColumn>
+            <RadzenGridColumn TItem="Account" Property="PublicKey" Title="Public Key" />
+            <RadzenGridColumn TItem="Account" Property="Id" Title="" TextAlign="TextAlign.Right">
+                <Template Context="data">
+                    @if (accountChainMap[data].AllowToken)
+                    {
+                        <RadzenButton Click=@(args => AddToken(data.Id)) Text="Token" Icon="add" ButtonStyle="ButtonStyle.Success" />
+                    }
+                    <RadzenButton Click=@(args => EditAccount(data.Id)) Text="" Icon="edit" ButtonStyle="ButtonStyle.Info" />
+                    <RadzenButton Click=@(args => DeleteAccount(data.Id)) Text="" Icon="delete" ButtonStyle="ButtonStyle.Danger" />
+                </Template>
+            </RadzenGridColumn>
+        </Columns>
+    </RadzenGrid>
+
+    @*<table class="table table-striped">
+            <thead>
+                <tr>
+                    <th width="40"></th>
+                    <th>Name</th>
+                    <th>Public Key</th>
+                    <th>Balance</th>
+                    <th>Chain</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Account a in accounts)
+                {
+                    var c = chains.First(x => x.Id == a.ChainId);
+                    <tr>
+                        <td><img src="@c.Icon" sizes="32" /></td>
+                        <td>@a.Name (@c.Type.ToString())</td>
+                        <td>@a.PublicKey</td>
+                        <td>@balances.First(x => x.AccountId == a.Id)?.Balance @c.Symbol</td>
+                        <td>@c.Host</td>
+                        <td align="right">
+                            @if (c.AllowToken)
+                            {
+                                <a class="btn btn-success btn-group-vertical" href="account/token/create/@a.Id">Add Token</a>
+                            }
+                            <a class="btn btn-success btn-group-vertical" href="account/edit/@a.Id">Edit</a>
+                            <button class="btn btn-danger btn-group-vertical" @onclick="@(() => DeleteAccount(a.Id))">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>*@
+
+    <br />
+    <p>
+        <h3>&nbsp;Tokens</h3>
+    </p>
+
+    <RadzenGrid AllowFiltering="false" AllowPaging="false" AllowSorting="true" Data="@tokens" TItem="AccountToken">
+        <Columns>
+            <RadzenGridColumn TItem="AccountToken" Property="Name" Title="Name">
+                <Template Context="data">
+                    <img src="@data.Icon" style="height:24px" /> &ensp; @data.Name
+                </Template>
+            </RadzenGridColumn>
+            <RadzenGridColumn TItem="AccountToken" Title="Balance" TextAlign="TextAlign.Right">
+                <Template Context="data">
+                    @tokenBalanceMap[data].Balance @data.Symbol
+                </Template>
+            </RadzenGridColumn>
+            <RadzenGridColumn TItem="AccountToken" Title="Account">
+                <Template Context="data">
+                    @accountTokenMap[data].Name
+                </Template>
+            </RadzenGridColumn>
+            <RadzenGridColumn TItem="AccountToken" Property="ContractKey" Title="Contract Key" />
+            <RadzenGridColumn TItem="AccountToken" Property="Id" Title="" TextAlign="TextAlign.Right">
+                <Template Context="data">
+                    <RadzenButton Click=@(args => EditToken(accountTokenMap[data].Id, data.Id)) Text="" Icon="edit" ButtonStyle="ButtonStyle.Info" />
+                    <RadzenButton Click=@(args => DeleteToken(data.Id)) Text="" Icon="delete" ButtonStyle="ButtonStyle.Danger" />
+                </Template>
+            </RadzenGridColumn>
+        </Columns>
+    </RadzenGrid>
+}
+
+@*
+    @if (tokens == null)
+    {
+        <text>Loading...</text>
+    }
+    else if (tokens.Length == 0)
+    {
+        <text>No Records Found.</text>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th width="40"></th>
+                    <th>Name</th>
+                    <th>Contract Key</th>
+                    <th>Balance</th>
+                    <th>Account</th>
+                    <th align="right"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (AccountToken t in tokens)
+                {
+                    var a = accounts.First(x => x.Id == t.AccountId);
+                    <tr>
+                        <td><img src="@t.Icon" sizes="32" /></td>
+                        <td>@t.Name</td>
+                        <td>@t.ContractKey</td>
+                        <td>@tokenBalances.FirstOrDefault(x => x.AccountTokenId == t.Id)?.Balance @t.Symbol</td>
+                        <td>@a.Name</td>
+                        <td>
+                            <a class="btn btn-success btn-group-vertical" href="account/token/edit/@a.Id/@t.Id">Edit</a>
+                            <button class="btn btn-danger btn-group-vertical" @onclick="@(() => DeleteToken(t.Id))">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }*@
+
+@code {
+    bool loaded = false;
+    Chain[] chains { get; set; }
+    Account[] accounts { get; set; }
+    AccountBalance[] balances { get; set; }
+    AccountToken[] tokens { get; set; }
+    AccountTokenBalance[] tokenBalances { get; set; }
+
+    Dictionary<Account, Chain> accountChainMap = new Dictionary<Account, Chain>();
+    Dictionary<AccountToken, Account> accountTokenMap = new Dictionary<AccountToken, Account>();
+    Dictionary<Account, AccountBalance> accountBalanceMap = new Dictionary<Account, AccountBalance>();
+    Dictionary<AccountToken, AccountTokenBalance> tokenBalanceMap = new Dictionary<AccountToken, AccountTokenBalance>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        accounts = (await client.GetFromJsonAsync<Account[]>("api/accounts")).OrderBy(x => x.Name).ToArray();
+
+        balances = await client.GetFromJsonAsync<AccountBalance[]>("api/accounts/balances");
+        foreach (var acc in accounts)
+        {
+            accountBalanceMap.Add(acc, balances.First(x => x.AccountId == acc.Id));
+        }
+
+        chains = await client.GetFromJsonAsync<Chain[]>("api/chains");
+        foreach (var acc in accounts)
+        {
+            accountChainMap.Add(acc, chains.First(x => x.Id == acc.ChainId));
+        }
+
+        tokens = (await client.GetFromJsonAsync<AccountToken[]>("api/accounts/tokens")).OrderBy(x => x.Name).ToArray();
+        foreach (var t in tokens)
+        {
+            accountTokenMap.Add(t, accounts.First(x => x.Id == t.AccountId));
+        }
+
+        tokenBalances = await client.GetFromJsonAsync<AccountTokenBalance[]>("api/accounts/tokens/balances");
+        foreach (var t in tokens)
+        {
+            tokenBalanceMap.Add(t, tokenBalances.FirstOrDefault(x => x.AccountTokenId == t.Id));
+        }
+
+        loaded = true;
+    }
+
+    void CreateAccount()
+    {
+        uriHelper.NavigateTo($"account/create", forceLoad: true);
+    }
+
+    void EditAccount(int id)
+    {
+        uriHelper.NavigateTo($"account/edit/{id}", forceLoad: true);
+    }
+
+    async Task DeleteAccount(int id)
+    {
+        var c = accounts.First(x => x.Id == id);
+        if (await js.InvokeAsync<bool>("confirm", $"Do you want to delete {c.Name}?"))
+        {
+            await client.DeleteAsync($"api/accounts/{id}");
+            await OnInitializedAsync();
+        }
+    }
+
+    void AddToken(int id)
+    {
+        uriHelper.NavigateTo($"account/token/create/{id}", forceLoad: true);
+    }
+
+    void EditToken(int accoundId, int tokenId)
+    {
+        uriHelper.NavigateTo($"account/token/edit/{accoundId}/{tokenId}", forceLoad: true);
+    }
+
+    async Task DeleteToken(int id)
+    {
+        var t = tokens.First(x => x.Id == id);
+        if (await js.InvokeAsync<bool>("confirm", $"Do you want to delete {t.Name}?"))
+        {
+            await client.DeleteAsync($"api/accounts/tokens/{id}");
+            await OnInitializedAsync();
+        }
+    }
+}

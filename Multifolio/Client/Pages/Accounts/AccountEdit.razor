@@ -1,0 +1,25 @@
+﻿@page "/account/edit/{accountId:int}"
+
+@inject HttpClient http
+@inject NavigationManager uriHelper
+@inject IJSRuntime js
+
+<h3>Edit Account</h3>
+
+<AccountForm ButtonText="Update" account="account" OnValidSubmit="@EditAccount" />
+
+@code {
+    [Parameter] public int accountId { get; set; }
+
+    Account account = new Account();
+
+    protected async override Task OnParametersSetAsync()
+    {
+        account = await http.GetFromJsonAsync<Account>($"api/accounts/{accountId}");
+    }
+    async Task EditAccount()
+    {
+        await http.PutAsJsonAsync("api/accounts", account);
+        uriHelper.NavigateTo("account");
+    }
+}

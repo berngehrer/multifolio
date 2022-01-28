@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31624.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Multifolio.Server", "Multifolio\Server\Multifolio.Server.csproj", "{AF9F45AB-E456-4AEF-9D90-15AA76C8B966}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Multifolio.Client", "Multifolio\Client\Multifolio.Client.csproj", "{41ECFA27-8A8D-4081-9EFA-7BDFA1E9C1AA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Multifolio.Shared", "Multifolio\Shared\Multifolio.Shared.csproj", "{B41847CC-7E8C-4E89-8805-702DCD85AC3F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BD15E299-9F7C-4E08-8CE2-C33D4734A493}"
+	ProjectSection(SolutionItems) = preProject
+		db\multifolio.db = db\multifolio.db
+		db\multifolio.sql = db\multifolio.sql
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AF9F45AB-E456-4AEF-9D90-15AA76C8B966}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF9F45AB-E456-4AEF-9D90-15AA76C8B966}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF9F45AB-E456-4AEF-9D90-15AA76C8B966}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF9F45AB-E456-4AEF-9D90-15AA76C8B966}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41ECFA27-8A8D-4081-9EFA-7BDFA1E9C1AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41ECFA27-8A8D-4081-9EFA-7BDFA1E9C1AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41ECFA27-8A8D-4081-9EFA-7BDFA1E9C1AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41ECFA27-8A8D-4081-9EFA-7BDFA1E9C1AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B41847CC-7E8C-4E89-8805-702DCD85AC3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B41847CC-7E8C-4E89-8805-702DCD85AC3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B41847CC-7E8C-4E89-8805-702DCD85AC3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B41847CC-7E8C-4E89-8805-702DCD85AC3F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3427B1A6-9A3C-4CC0-886C-CEF81CAE0A43}
+	EndGlobalSection
+EndGlobal

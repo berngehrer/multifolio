@@ -1,0 +1,27 @@
+﻿@page "/account/token/edit/{accountId:int}/{tokenId:int}"
+
+@inject HttpClient http
+@inject NavigationManager uriHelper
+@inject IJSRuntime js
+
+<h3>Edit Token</h3>
+
+<AccountTokenForm ButtonText="Update" token="@token" OnValidSubmit="@EditToken" />
+
+@code {
+    [Parameter] public int accountId { get; set; }
+    [Parameter] public int tokenId { get; set; }
+
+    AccountToken token = new AccountToken();
+
+    protected async override Task OnParametersSetAsync()
+    {
+        token = await http.GetFromJsonAsync<AccountToken>($"api/accounts/tokens/{tokenId}");
+    }
+    async Task EditToken()
+    {
+        token.AccountId = accountId;
+        await http.PutAsJsonAsync("api/accounts/tokens", token);
+        uriHelper.NavigateTo("account");
+    }
+}

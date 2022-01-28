@@ -1,0 +1,57 @@
+﻿<EditForm Model="@token" OnValidSubmit="@OnValidSubmit">
+    <DataAnnotationsValidator />
+    <RadzenCard>
+        <div class="form-group ">
+            <div>
+                <label>Name:</label>
+                <div>
+                    <RadzenTextBox @bind-Value=@token.Name MaxLength="8" Class="w-100" />
+                    <ValidationMessage For="@(() => token.Name)" />
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Contract Key:</label>
+            <div>
+                <RadzenTextBox @bind-Value=@token.ContractKey MaxLength="8" Class="w-100" />
+                <ValidationMessage For="@(() => token.ContractKey)" />
+            </div>
+        </div>
+        <div class="form-group ">
+            <div>
+                <label>Icon:</label>
+                <div>
+                    <RadzenTextBox @bind-Value=@token.Icon MaxLength="8" Class="w-100" />
+                </div>
+                <a href="http://cryptoicons.co/" target="_blank">Checkout</a>
+            </div>
+        </div>
+        <div class="form-group ">
+            <div>
+                <label>Symbol:</label>
+                <div>
+                    <RadzenTextBox @bind-Value=@token.Symbol MaxLength="8" Class="w-100" />
+                </div>
+            </div>
+        </div>
+        @*<div class="form-group ">
+                <div>
+                    <label>Decimals:</label>
+                    <div>
+                        <input type="number" @bind="@token.Decimals" />
+                    </div>
+                </div>
+            </div>*@
+    </RadzenCard>
+    <br />
+    <RadzenButton ButtonType="ButtonType.Submit" style="width: 120px" Text="@ButtonText" />
+    @*<button type="submit" class="btn btn-success">
+            @ButtonText
+        </button>*@
+</EditForm>
+
+@code {
+    [Parameter] public AccountToken token { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+}

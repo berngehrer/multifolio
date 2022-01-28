@@ -1,0 +1,20 @@
+﻿@page "/account/token/create/{accountId:int}"
+
+@inject HttpClient http
+@inject NavigationManager uriHelper
+
+<h3>Create Token</h3>
+
+<AccountTokenForm ButtonText="Create Token" token="@token" OnValidSubmit="@CreateToken" />
+
+@code {
+    [Parameter] public int accountId { get; set; }
+
+    AccountToken token = new AccountToken();
+    async Task CreateToken()
+    {
+        token.AccountId = accountId;
+        await http.PostAsJsonAsync("api/accounts/tokens", token);
+        uriHelper.NavigateTo("account");
+    }
+}

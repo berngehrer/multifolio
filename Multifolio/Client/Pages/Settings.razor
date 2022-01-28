@@ -1,0 +1,152 @@
+﻿@page "/settings"
+
+@inject HttpClient http
+@inject IJSRuntime js
+
+<p>
+    <h2>&nbsp;Settings</h2>
+</p>
+
+<EditForm Model="@settings" OnValidSubmit="@EditSettings">
+    <DataAnnotationsValidator />
+
+    <!--<RadzenCard>
+        <h4>General</h4>
+        <div class="form-group ">
+            <label>Currency:</label>
+            <div>
+                <RadzenTextBox @bind-Value=@settings.Currency MaxLength="8" Class="w-100" />-->
+    @*<InputText @bind-Value="@settings.Currency" />*@
+    <!--<ValidationMessage For="@(() => settings.Currency)" />
+            </div>
+        </div>
+    </RadzenCard>
+    <br />-->
+<RadzenCard>
+    <h4>Coinbase</h4>
+    <div class="form-group ">
+        <label>Api Key:</label>
+        <div>
+            <RadzenTextBox  Class="w-100" />
+            @*<RadzenTextBox @bind-Value=@settings.Currency Class="w-100" />
+            <ValidationMessage For="@(() => settings.Currency)" />*@
+        </div>
+    </div>
+    <div class="form-group ">
+        <label>Api Secret:</label>
+        <div>
+            <RadzenTextBox Class="w-100" />
+            @*<RadzenTextBox @bind-Value=@settings.Currency Class="w-100" />
+            <ValidationMessage For="@(() => settings.Currency)" />*@
+        </div>
+    </div>
+</RadzenCard>
+    <br />
+    <RadzenCard>
+        <h4>Purestake</h4>
+        <div class="form-group">
+            <label>Algorand Api Key:</label>
+            <div>
+                <RadzenTextBox @bind-Value=@settings.PurestakeAlgorandApiKey MaxLength="50" Class="w-100" />
+                @*<InputText @bind-Value="@settings.PurestakeAlgorandApiKey" />*@
+                <ValidationMessage For="@(() => settings.PurestakeAlgorandApiKey)" />
+            </div>
+        </div>
+    </RadzenCard>
+    <br />
+    <RadzenCard>
+        <h4>Coinmarketcap</h4>
+        <div class="form-group">
+            <label>Api Key:</label>
+            <div>
+                <RadzenTextBox @bind-Value=@settings.CoinmarketcapApiKey MaxLength="50" Class="w-100" />
+                @*<InputText @bind-Value="@settings.CoinmarketcapApiKey" />*@
+                <ValidationMessage For="@(() => settings.CoinmarketcapApiKey)" />
+            </div>
+        </div>
+        <div class="form-group ">
+            <label>Request Interval:</label>
+            <div>
+                <nobr><RadzenNumeric TValue="double" Format="0.0" @bind-Value=@settings.CoinmarketcapMinuteInterval Class="mr-1" />&ensp;Minutes</nobr>
+                @*<input type="number" @bind="@settings.CoinmarketcapMinuteInterval" />*@
+            </div>
+        </div>
+    </RadzenCard>
+    <br />
+    <RadzenCard>
+        <h4>Telegram</h4>
+        <div class="form-group ">
+            <div>
+                <label>Bot Key:</label>
+                <div>
+                    <RadzenTextBox @bind-Value=@settings.TelegramBotKey MaxLength="50" Class="w-100" />
+                    @*<InputText @bind-Value="@settings.TelegramBotKey" />*@
+                    <ValidationMessage For="@(() => settings.PurestakeAlgorandApiKey)" />
+                </div>
+            </div>
+        </div>
+        <div class="form-group ">
+            <div>
+                <label>Chat Id:</label>
+                <div>
+                    <RadzenTextBox @bind-Value=@settings.TelegramChatId MaxLength="20" Class="w-100" />
+                    @*<InputText @bind-Value="@settings.TelegramChatId" />*@
+                    <ValidationMessage For="@(() => settings.Currency)" />
+                </div>
+            </div>
+        </div>
+    </RadzenCard>
+    <br />
+    <RadzenCard>
+        <h4>Notification</h4>
+        <div class="form-group ">
+            <div>
+                <label>Percent Change:</label>
+                <div>
+                    <nobr><RadzenNumeric TValue="double" Format="0.0" @bind-Value=@settings.NotificationPercentage Class="mr-1" />&ensp;%</nobr>
+                    @*<input type="number" @bind="@settings.NotificationPercentage" />*@
+                </div>
+            </div>
+        </div>
+        @*<div class="form-group ">
+                <div>
+                    <label>Notification Min Balance:</label>
+                    <div>
+                        <input type="number" @bind="@settings.NotificationMinBalance" />
+                    </div>
+                </div>
+            </div>*@
+        <div class="form-group ">
+            <div>
+                <label>Sleep Interval:</label>
+                <div>
+                    <nobr><RadzenNumeric TValue="double" Format="0.0" @bind-Value=@settings.NotificationSleepInterval Class="mr-1" />&ensp;Minutes</nobr>
+                    @*<input type="number" @bind="@settings.NotificationSleepInterval" />*@
+                </div>
+            </div>
+        </div>
+    </RadzenCard>
+
+    <RadzenButton ButtonType="ButtonType.Submit" style="width: 120px" BusyText="Updating..." IsBusy=@busy Text="Update" />
+    @*<button type="submit" class="btn btn-success">
+            Update
+        </button>*@
+</EditForm>
+
+@code {
+    bool busy = false;
+    BackendSettings settings = new BackendSettings();
+
+    protected async override Task OnParametersSetAsync()
+    {
+        settings = await http.GetFromJsonAsync<BackendSettings>($"api/settings");
+    }
+    async Task EditSettings()
+    {
+        busy = true;
+        await http.PutAsJsonAsync("api/settings", settings);
+        busy = false;
+
+        //await js.InvokeVoidAsync("alert", $"Updated Successfully!");
+    }
+}

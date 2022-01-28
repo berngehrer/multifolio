@@ -1,0 +1,118 @@
+﻿@page "/chain"
+
+@inject NavigationManager uriHelper;
+@inject HttpClient client
+@inject IJSRuntime js
+
+<p>
+    <h2>&nbsp;Networks</h2>
+</p>
+
+<div class="form-group">
+    <RadzenButton Click=@(args => Create()) Text="Create" Icon="add" ButtonStyle="ButtonStyle.Success" />
+    @*<RadzenButton Click=@(args => Import()) Text="Import" Icon="import" ButtonStyle="ButtonStyle.Secondary" />*@
+
+    @*<a class="btn btn-success" style="width:100px" href="chain/create"><i class="oi oi-plus"></i>&nbsp;Create</a>
+    <a class="btn btn-dark" style="width:100px" href="chain"><i class="oi oi-arrow-bottom"></i>&nbsp;Import</a>*@
+</div>
+<br>
+
+@if (chains == null)
+{
+    <text>Loading...</text>
+}
+else if (chains.Length == 0)
+{
+    <text>No Records Found.</text>
+}
+else
+{
+    <RadzenGrid AllowFiltering="false" AllowPaging="false" AllowSorting="true" Data="@chains" TItem="Chain">
+        <Columns>
+            <RadzenGridColumn TItem="Chain" Property="Type" Title="Wallet">
+                <Template Context="data">
+                    <img src="@data.Icon" style="height:24px" /> &ensp;  @data.Type.ToString()
+                </Template>
+            </RadzenGridColumn>
+            <RadzenGridColumn TItem="Chain" Property="Name" Title="Name" />
+            <RadzenGridColumn TItem="Chain" Property="Symbol" Title="Symbol" />
+            @*<RadzenGridColumn TItem="Chain" Property="Host" Title="Host" />*@
+            <RadzenGridColumn TItem="Chain" Property="Id" Title="" TextAlign="TextAlign.Right">
+                <Template Context="data">
+                    <RadzenButton Click=@(args => Edit(data.Id)) Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Info" />
+                    <RadzenButton Click=@(args => Delete(data.Id)) Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" />
+
+                    @*<a class="btn btn-success btn-group-vertical" href="chain/edit/@c.Id">Edit</a>
+                <button class="btn btn-danger btn-group-vertical" @onclick="@(() => Delete(c.Id))">Delete</button>*@
+                </Template>
+            </RadzenGridColumn>
+        </Columns>
+    </RadzenGrid>
+
+    @*<table class="table table-striped">
+        <thead>
+            <tr>
+                <th width="40"></th>
+                <th>Type</th>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Host</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Chain c in chains)
+            {
+                <tr>
+                    <td><img src="@c.Icon" sizes="32" /></td>
+                    <td>@c.Type.ToString()</td>
+                    <td>@c.Symbol</td>
+                    <td>@c.Name</td>
+                    <td>@c.Host</td>
+                    <td align="right">
+                        <a class="btn btn-success btn-group-vertical" href="chain/edit/@c.Id">Edit</a>
+                        <button class="btn btn-danger btn-group-vertical" @onclick="@(() => Delete(c.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>*@
+}
+
+@code {
+    Chain[] chains { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        chains = await client.GetFromJsonAsync<Chain[]>("api/chains");
+        chains = chains.OrderBy(x => x.Name).ToArray();
+    }
+
+    void Edit(int id)
+    {
+        uriHelper.NavigateTo($"chain/edit/{id}", forceLoad: true);
+    }
+
+    void Create()
+    {
+        uriHelper.NavigateTo($"chain/create", forceLoad: true);
+    }
+
+    void Import()
+    {
+        uriHelper.NavigateTo($"chain", forceLoad: true);
+    }
+
+    async Task Delete(int id)
+    {
+        var c = chains.First(x => x.Id == id);
+        //var result = await new DialogService(uriHelper).Confirm($"Do you want to delete {c.Name}?", "Confirm", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+        if (await js.InvokeAsync<bool>("confirm", $"Do you want to delete {c.Name}?"))
+        //if (result ?? false)
+        {
+            await client.DeleteAsync($"api/chains/{id}");
+            await OnInitializedAsync();
+        }
+    }
+}

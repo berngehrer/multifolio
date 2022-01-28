@@ -1,0 +1,26 @@
+﻿@page "/chain/edit/{chainId:int}"
+
+@inject HttpClient http
+@inject NavigationManager uriHelper
+@inject IJSRuntime js
+
+<h3>Edit Chain</h3>
+
+<ChainForm ButtonText="Update" chain="chain" OnValidSubmit="@EditChain" />
+
+@code {
+    [Parameter] public int chainId { get; set; }
+
+    Chain chain = new Chain();
+
+    protected async override Task OnParametersSetAsync()
+    {
+        chain = await http.GetFromJsonAsync<Chain>($"api/chains/{chainId}");
+    }
+    async Task EditChain()
+    {
+        await http.PutAsJsonAsync("api/chains", chain);
+        //await js.InvokeVoidAsync("alert", $"Updated Successfully!");
+        uriHelper.NavigateTo("chain");
+    }
+}

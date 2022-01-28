@@ -1,0 +1,62 @@
+﻿@inject HttpClient client
+
+@if (chains == null)
+{
+    <text>Loading...</text>
+}
+else
+{
+<EditForm Model="@account" OnValidSubmit="@OnValidSubmit">
+    <DataAnnotationsValidator />
+    <RadzenCard>
+        <div class="form-group ">
+            <div>
+                <label>Chain:</label>
+                <div>
+                    <InputSelect @bind-Value="account.ChainId">
+                        @foreach (var c in chains)
+                            {
+                            <option value="@c.Id">@c.Name</option>
+                            }
+                    </InputSelect>
+                </div>
+            </div>
+        </div>
+        <div class="form-group ">
+            <div>
+                <label>Name:</label>
+                <div>
+                    <RadzenTextBox @bind-Value=@account.Name Class="w-100" />
+                    <ValidationMessage For="@(() => account.Name)" />
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Public Key:</label>
+            <div>
+                <RadzenTextBox @bind-Value=@account.PublicKey Class="w-100" />
+                <ValidationMessage For="@(() => account.PublicKey)" />
+            </div>
+        </div>
+    </RadzenCard>
+    <br />
+    <RadzenButton ButtonType="ButtonType.Submit" style="width: 120px" Text="@ButtonText" />
+    @*<button type="submit" class="btn btn-success">
+        @ButtonText
+    </button>*@
+</EditForm>
+}
+
+@code {
+    [Parameter] public Account account { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Save";
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+
+    Chain[] chains { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        chains = await client.GetFromJsonAsync<Chain[]>("api/chains");
+        chains = chains.OrderBy(x => x.Name).ToArray();
+    }
+}

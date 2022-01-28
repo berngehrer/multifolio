@@ -1,0 +1,436 @@
+﻿@page "/"
+
+@using System;
+@using Radzen.Blazor
+@using System.Threading;
+@using System.Globalization
+
+@inject NavigationManager uriHelper;
+@inject HttpClient http
+@inject IJSRuntime js
+
+@if (portfolio == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <!-- Header -->
+    <RadzenCard>
+        <table style="border:0px;width:100%">
+            <tr>
+                <td valign="bottom"><h1><nobr>@String.Format("{0:n2} €", portfolio.Amount)</nobr></h1></td>
+                <td align="right">
+                    <nobr>
+                        @*<RadzenButton Click=@(args => Refresh()) Icon="refresh" ButtonStyle="ButtonStyle.Light" Style="width:40px;padding:3px" />*@
+                        @*<small>@portfolio.Updated.ToShortDateString()&ensp;@portfolio.Updated.ToLongTimeString()</small>&ensp;*@
+                        <small>@portfolio.Updated.ToLongTimeString()</small>&ensp;
+                        <RadzenButton Click=@(async (args) => await RefreshAsync()) Icon="refresh" ButtonStyle="ButtonStyle.Secondary" IsBusy=@busy Style="width:40px;padding:3px" />
+                    </nobr>
+                    @*<button type="submit" class="btn btn-outline-dark" style="width:40px" @onclick="@(Refresh)">
+                            <span class="oi oi-reload" aria-hidden="true"></span>
+                        </button>*@
+                </td>
+            </tr>
+
+        </table>
+        <table style="border:0px;width:100%">
+            <tr>
+                <td valign="top">
+                    <h4>
+                        @if (portfolio.PercentChange >= 0)
+                        {
+                            <span style='color:forestgreen;padding-right:5px'><nobr><span class="oi oi-arrow-circle-top" />&ensp;@String.Format("{0:n1}%", portfolio.PercentChange)</nobr></span>
+                            <span style='color:forestgreen'><nobr>@String.Format("({0:n2} {1})", portfolio.AmountChange, portfolio.Currency)</nobr></span>
+                        }
+                        else
+                        {
+                            <span style='color:firebrick; padding-right:5px'><nobr><span class="oi oi-arrow-circle-bottom" />&ensp;@String.Format("{0:n1}%", portfolio.PercentChange)</nobr></span>
+                            <span style='color:firebrick'><nobr>@String.Format("({0:n2} {1})", Math.Abs(portfolio.AmountChange), portfolio.Currency)</nobr></span>
+                        }
+                    </h4>
+                </td>
+                <td align="right">
+                    <div>
+
+                        <RadzenDropDown @bind-Value=@dateRange Data="@(Enum.GetValues(typeof(DateRange)).Cast<DateRange>())" Change=@(args => ChangeRangeAsync(args)) Style="width:100px">
+                            <Template>
+                                @((DateRange)context)
+                            </Template>
+                        </RadzenDropDown>
+
+
+                        @*<RadzenSelectBar @bind-Value=@dateRange TValue="DateRange" Change=@(args => ChangeRangeAsync(args))>
+                                <Items>
+                                    <RadzenSelectBarItem Style="width:30px" Text="H" Value="DateRange.Hour" />
+                                    <RadzenSelectBarItem Style="width:30px" Text="D" Value="DateRange.Day" />
+                                    <RadzenSelectBarItem Style="width:30px" Text="W" Value="DateRange.Week" />
+                                    <RadzenSelectBarItem Style="width:30px" Text="M" Value="DateRange.Month" />
+                                    <RadzenSelectBarItem Style="width:30px" Text="Y" Value="DateRange.Year" />
+                                    <RadzenSelectBarItem Style="width:30px" Text="A" Value="DateRange.All" />
+                                </Items>
+                            </RadzenSelectBar>*@
+                        @*<nobr>
+                                <button type="submit" class="btn btn-primary" style="width:40px;padding:3px" @onclick="@(() => ChangeRangeAsync(DateRange.Hour))">H</button>
+                                <button type="submit" class="btn btn-outline-info" style="width:40px;padding:3px" @onclick="@(async () => await ChangeRangeAsync(DateRange.Day))">D</button>
+                                <button type="submit" class="btn btn-outline-info" style="width:40px;padding:3px" @onclick="@(async () => await ChangeRangeAsync(DateRange.Week))">W</button>
+                                <button type="submit" class="btn btn-outline-info" style="width:40px;padding:3px" @onclick="@(async () => await ChangeRangeAsync(DateRange.Month))">M</button>
+                                <button type="submit" class="btn btn-outline-info" style="width:40px;padding:3px" @onclick="@(async () => await ChangeRangeAsync(DateRange.Year))">Y</button>
+                                <button type="submit" class="btn btn-outline-info" style="width:40px;padding:3px" @onclick="@(async () => await ChangeRangeAsync(DateRange.All))">A</button>
+                            </nobr>*@
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        @*<br />*@
+
+        <!-- Chart -->
+        <RadzenChart>
+            <RadzenLineSeries Smooth="true" Data="portfolio.Balances" CategoryProperty="Date" LineType="LineType.Solid" ValueProperty="Amount">
+                <RadzenMarkers MarkerType="MarkerType.None" />
+            </RadzenLineSeries>
+            <RadzenLegend Visible="false" />
+            <RadzenCategoryAxis Padding="20" Formatter="@FormatAsDate" />
+            <RadzenValueAxis Formatter="@FormatAsEUR">
+                <RadzenGridLines Visible="false" />
+            </RadzenValueAxis>
+        </RadzenChart>
+
+    </RadzenCard>
+
+    <br />
+
+    <RadzenCard>
+        <div><nobr>
+    &nbsp;&nbsp;
+    <RadzenCheckBox @bind-Value=@grouped Name="cbxGrouping" TValue="bool" Change=@(args => ChangeGroupedAsync(args)) />
+    <RadzenLabel Text="Grouped" Component="cbxGrouping" Style="margin-left: 8px; vertical-align: middle;" />
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <RadzenCheckBox @bind-Value=@includeEmpty Name="cbxInclEmpty" TValue="bool" Change=@(args => ChangeEmptyAsync(args)) />
+    <RadzenLabel Text="Empty" Component="cbxInclEmpty" Style="margin-left: 8px; vertical-align: middle;" />
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <RadzenCheckBox @bind-Value=@pricesEnable Name="cbxPrices" TValue="bool" />
+    <RadzenLabel Text="Prices" Component="cbxPrices" Style="margin-left: 8px; vertical-align: middle;" />
+</nobr></div>
+        
+        <!-- Assets -->
+        <RadzenDataList WrapItems="true" AllowPaging="false" Data="@portfolio.Assets" TItem="PortfolioAsset">
+            <Template Context="data">
+                <RadzenCard Style="width:320px">
+                    <div class="row">
+                        <table style="width: 100%; vertical-align: baseline; margin-left: 10px; margin-right: 10px ">
+                            <tr>
+                                <td width="60px">
+                                    <RadzenImage Path="@data.Icon" Class="rounded-circle float-left mr-3" Style="width: 40px; height: 40px;" />
+                                </td>
+                                <td>
+                                    <div>
+                                        <h3 class="mb-0">@data.Name</h3>
+                                        <small>@String.Format("{0} {1}", data.Balance, data.Symbol)</small>&nbsp;
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@(String.Format("{0:n2} {1}", data.Price, data.Currency)) Style="font-size:14px" />
+                                    </div>
+                                </td>
+                                <td style="text-align:right">
+                                    <div>
+                                        <span style="font-size:22px"><nobr>@String.Format("{0:n2} {1}", data.Amount, data.Currency)</nobr></span>
+                                        @if (data.Change >= 0)
+                                        {
+                                            <div style='color:forestgreen;'><small><nobr>@String.Format("+{0:n2}% ({1:n2} {2})", data.Change, data.ChangeAmount, data.Currency)</nobr></small></div>
+                                        }
+                                        else
+                                        {
+                                            <div style='color:firebrick;'><small><nobr>@String.Format("{0:n2} % ({1:n2} {2})", data.Change, Math.Abs(data.ChangeAmount), data.Currency)</nobr></small></div>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        @*<hr style="border: none; background-color: rgba(0,0,0,.08); height: 1px;" />*@
+                        <RadzenChart Style="height: 120px; margin-left: 10px" class="w-100" Visible="@pricesEnable">
+                            <RadzenLineSeries Smooth="false" Data="data.PriceHistory" CategoryProperty="Date" LineType="LineType.Solid" ValueProperty="Amount">
+                                <RadzenMarkers MarkerType="MarkerType.None" />
+                            </RadzenLineSeries>
+                            <RadzenLegend Visible="false" />
+                            <RadzenCategoryAxis Formatter="@FormatAsDate" />
+                            <RadzenValueAxis Formatter="@FormatAsEUR2">
+                                <RadzenGridLines Visible="false" />
+                            </RadzenValueAxis>
+                        </RadzenChart>
+                    </div>
+                </RadzenCard>
+            </Template>
+        </RadzenDataList>
+    </RadzenCard>
+
+        <br />
+
+        <RadzenCard>
+            <div style="display:flex;flex-flow:column wrap;justify-content:space-between;align-items:stretch">
+                <div style="flex-basis:auto">
+                    <RadzenChart Style="width:100%;margin-left:10px;margin-right:10px">
+                        @for (int i = 0; i < portfolio.Assets.Length; i++)
+                        {
+                        <RadzenLineSeries Smooth="true" Data="portfolio.Assets[i].PriceHistory" Title="@(portfolio.Assets[i].Name)" CategoryProperty="Date" LineType="LineType.Solid" ValueProperty="Percent">
+                            <RadzenMarkers MarkerType="MarkerType.None" />
+                        </RadzenLineSeries>
+                        }
+                        <RadzenLegend Visible="false" />
+                        <RadzenCategoryAxis Padding="20" Formatter="@FormatAsDate" />
+                        <RadzenValueAxis Formatter="@FormatAsPercent">
+                            <RadzenGridLines Visible="false" />
+                        </RadzenValueAxis>
+                    </RadzenChart>
+                </div>
+                <div style="flex-basis:auto">
+                    <RadzenChart>                        
+                        <RadzenDonutSeries Data="@portfolio.Assets" CategoryProperty="Name" ValueProperty="Percent">
+                            @*<TitleTemplate>
+                                <div class="rz-donut-content">
+                                    <h1>%</h1>
+                                </div>
+                            </TitleTemplate>*@
+                        </RadzenDonutSeries>
+                    </RadzenChart>
+                </div>
+            </div>
+
+            @*<RadzenChart>
+                <RadzenLegend Visible="false" />
+                <RadzenColumnSeries Data="@portfolio.Assets" CategoryProperty="Name" ValueProperty="Percent" />
+                <RadzenColumnOptions Radius="5" />
+                <RadzenValueAxis Formatter="@FormatAsPercent">
+                    <RadzenGridLines Visible="false" />
+                </RadzenValueAxis>
+            </RadzenChart>*@
+        </RadzenCard>
+
+            <!-- Assets -->
+            <!--<RadzenDataList WrapItems="true" AllowPaging="false" Data="@portfolio.Assets" TItem="PortfolioAsset">
+            <Template Context="data">
+                <RadzenCard Style="width:320px">
+                    <table>
+                        <tr>
+                            <td width="60px">
+                                <RadzenImage Path="@data.Icon" Class="rounded-circle float-left mr-3" Style="width: 40px; height: 40px;" />
+                            </td>
+                            <td>
+                                <div>
+                                    <h3 class="mb-0">@data.Name</h3>
+                                    <small>@String.Format("{0} {1}", data.Balance, data.Symbol)</small>&nbsp;
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@(String.Format("{0:n2} {1}", data.Price, data.Currency)) Style="font-size:14px" />
+                                </div>
+                            </td>
+                            <td style="text-align:right">
+                                <div>
+                                    <span style="font-size:22px"><nobr>@String.Format("{0:n2} {1}", data.Amount, data.Currency)</nobr></span>
+                                    @if (data.Change >= 0)
+                                    {
+                                        <div style='color:forestgreen;'><small><nobr>@String.Format("+{0:n2}% ({1:n2} {2})", data.Change, data.ChangeAmount, data.Currency)</nobr></small></div>
+                                    }
+                                    else
+                                    {
+                                        <div style='color:firebrick;'><small><nobr>@String.Format("{0:n2} % ({1:n2} {2})", data.Change, Math.Abs(data.ChangeAmount), data.Currency)</nobr></small></div>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </RadzenCard>
+            </Template>
+        </RadzenDataList>-->
+            @*<RadzenTabs style="margin: 20px auto" RenderMode="TabRenderMode.Client">
+                <Tabs>
+                    <RadzenTabsItem Text="Assets">
+
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="Details">
+                        <RadzenGrid AllowFiltering="false" AllowPaging="false" AllowSorting="true" Data="@portfolio.Assets" TItem="PortfolioAsset">
+                            <Columns>
+                                <RadzenGridColumn TItem="PortfolioAsset" Property="Name" Title="Asset">
+                                    <Template Context="data">
+                                        <img src="@data.Icon" style="height:24px" /> &ensp;  @data.Name
+                                    </Template>
+                                </RadzenGridColumn>
+                                <RadzenGridColumn TItem="PortfolioAsset" Property="Balance" Title="Balance" TextAlign="TextAlign.Right">
+                                    <Template Context="data">
+                                        @String.Format("{0} {1}", data.Balance, data.Symbol)
+                                    </Template>
+                                </RadzenGridColumn>
+                                <RadzenGridColumn TItem="PortfolioAsset" Property="Price" Title="Price" TextAlign="TextAlign.Right">
+                                    <Template Context="data">
+                                        @String.Format("{0:n2} {1}", data.Price, data.Currency)
+                                    </Template>
+                                </RadzenGridColumn>
+                                <RadzenGridColumn TItem="PortfolioAsset" Property="Amount" Title="Amount" TextAlign="TextAlign.Right">
+                                    <Template Context="data">
+                                        @String.Format("{0:n2} {1}", data.Amount, data.Currency)
+                                    </Template>
+                                </RadzenGridColumn>
+                                <RadzenGridColumn TItem="PortfolioAsset" Property="Change" Title="Change" TextAlign="TextAlign.Right">
+                                    <Template Context="data">
+                                        @if (data.Change >= 0)
+                                        {
+                                            <span style='color:forestgreen'>@String.Format("+{0:n2}% ({1:n2} {2})", data.Change, data.ChangeAmount, data.Currency)</span>
+                                        }
+                                        else
+                                        {
+                                            <span style='color:firebrick'>@String.Format("{0:n2} % ({1:n2} {2})", data.Change, Math.Abs(data.ChangeAmount), data.Currency)</span>
+                                        }
+                                    </Template>
+                                </RadzenGridColumn>
+                                <RadzenGridColumn TItem="PortfolioAsset" Property="Percent" Title="Percent" TextAlign="TextAlign.Right">
+                                    <Template Context="data">
+                                        <RadzenProgressBar @bind-Value="@data.Percent" ShowValue="true" />
+                                    </Template>
+                                </RadzenGridColumn>
+                            </Columns>
+                        </RadzenGrid>
+                        <br />
+                        <RadzenChart>
+                            <RadzenLegend Visible="false" />
+                            <RadzenDonutSeries Data="@portfolio.Assets" CategoryProperty="Name" ValueProperty="Percent">
+                                <TitleTemplate>
+                                    <div class="rz-donut-content">
+                                        Spreading
+                                    </div>
+                                </TitleTemplate>
+                            </RadzenDonutSeries>
+                        </RadzenChart>
+                    </RadzenTabsItem>
+                </Tabs>
+            </RadzenTabs>*@
+            }
+
+            @code {
+                bool busy = false;
+                bool grouped = true;
+                bool includeEmpty = false;
+                bool pricesEnable = true;
+                DateRange dateRange = DateRange.Hour;
+                Multifolio.Shared.Portfolio portfolio;
+
+                [Parameter] public int range { get; set; }
+
+
+                protected override async Task OnInitializedAsync()
+                {
+                    Ticker();
+                    dateRange = (DateRange)range;
+                    await AfterInitializedAsync();
+                }
+
+                async void Ticker()
+                {
+                    while (true)
+                    {
+                        await Task.Delay(TimeSpan.FromMinutes(1));
+                        await AfterInitializedAsync();
+                        StateHasChanged();
+                    }
+                }
+
+                async Task AfterInitializedAsync()
+                {
+                    portfolio = await http.GetFromJsonAsync<Multifolio.Shared.Portfolio>($"api/portfolio/{range}/{(grouped ? '1' : '0')}/{(includeEmpty ? '1' : '0')}");
+                }
+
+                string FormatAsEUR(object value)
+                {
+                    return ((double)value).ToString("C0", CultureInfo.CreateSpecificCulture("de-DE"));
+                }
+
+                string FormatAsEUR2(object value)
+                {
+                    return ((double)value).ToString("n2", CultureInfo.CreateSpecificCulture("de-DE"));
+                }
+
+                string FormatAsPercent(object value)
+                {
+                    return ((double)value).ToString("n0", CultureInfo.CreateSpecificCulture("de-DE")) + "%";
+                }
+
+
+                /// <summary>
+                /// see: https://docs.microsoft.com/de-de/dotnet/api/system.datetime.tostring?view=net-5.0
+                /// </summary>
+                string FormatAsDate(object value)
+                {
+                    var dt = (DateTime)value;
+                    var culture = CultureInfo.CreateSpecificCulture("de-DE");
+                    return dateRange switch
+                    {
+                        DateRange.Hour => dt.ToString("HH:mm", culture),
+                        DateRange.Day => dt.ToString("HH:mm", culture),
+                        DateRange.Week => dt.ToString("ddd., HH:mm", culture),
+                        DateRange.Month => dt.ToString("dd., dd.MM.", culture),
+                        DateRange.Year => dt.ToString("MM.yyyy", culture),
+                        DateRange.All => dt.ToString("MM.yyyy", culture),
+                        _ => null
+                    };
+                }
+
+                async Task ChangeRangeAsync(object o) //DateRange r)
+                {
+                    range = (int)dateRange;
+                    await AfterInitializedAsync();
+                    StateHasChanged();
+                }
+
+                async Task ChangeGroupedAsync(object o) //DateRange r)
+                {
+                    grouped = (bool)o;
+                    await AfterInitializedAsync();
+                    StateHasChanged();
+                }
+
+                async Task ChangeEmptyAsync(object o) //DateRange r)
+                {
+                    includeEmpty = (bool)o;
+                    await AfterInitializedAsync();
+                    StateHasChanged();
+                }
+
+                async Task RefreshAsync()
+                {
+                    busy = true;
+                    await http.GetAsync($"api/portfolio/refresh");
+                    await AfterInitializedAsync();
+                    StateHasChanged();
+                    busy = false;
+                }
+
+                //protected override void OnAfterRender(bool firstRender)
+                //{
+                //    if (firstRender)
+                //    {
+                //        var timer = new Timer(new TimerCallback(_ =>
+                //        {
+                //            //AfterInitializedAsync().Wait();
+                //            //StateHasChanged();
+                //            uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true);
+                //        }), null, 1000 * 60 * 2, 1000);
+                //    }
+                //}
+            }
+
+            @*<hr style="border: none; background-color: rgba(0,0,0,.08); height: 1px; margin: 1rem 0;" />
+            <div class="row">
+                <div class="col-md-8 text-truncate">
+                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@(String.Format("{0:n2} {1}", data.Price, data.Currency)) Style="font-size:14px" />
+                </div>
+                <div class="col-md-4 text-right">
+                    @if (data.Change >= 0)
+                    {
+                        <span style='color:forestgreen;'>@String.Format("+{0:n2}% ({1:n2} {2})", data.Change, data.ChangeAmount, data.Currency)</span>
+                    }
+                    else
+                    {
+                        <span style='color:firebrick;'>@String.Format("{0:n2} % ({1:n2} {2})", data.Change, Math.Abs(data.ChangeAmount), data.Currency)</span>
+                    }
+                </div>
+            </div>*@
+            @*<hr style="border: none; background-color: rgba(0,0,0,.08); height: 1px;" />
+            <div class="row">
+                <RadzenProgressBar @bind-Value="@data.Percent" ShowValue="true" Style="width:100%" />
+            </div>*@
